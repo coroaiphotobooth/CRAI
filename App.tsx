@@ -25,12 +25,17 @@ const App: React.FC = () => {
     if (savedSettings) setSettings(JSON.parse(savedSettings));
     if (savedConcepts) setConcepts(JSON.parse(savedConcepts));
     
-    // 2. Sinkronisasi dari Cloud untuk mendapatkan data terbaru (termasuk Overlay URL)
+    // 2. Sinkronisasi dari Cloud untuk mendapatkan data terbaru
     const syncCloud = async () => {
       try {
         const res = await fetchSettings();
         if (res.ok) {
           setSettings(prev => ({ ...prev, ...res.settings }));
+          // Jika ada konsep di cloud, gunakan itu
+          if (res.concepts && Array.isArray(res.concepts)) {
+            setConcepts(res.concepts);
+            localStorage.setItem('pb_concepts', JSON.stringify(res.concepts));
+          }
         }
         
         const events = await fetchEvents();
