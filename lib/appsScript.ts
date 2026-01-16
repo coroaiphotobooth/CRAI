@@ -67,6 +67,17 @@ export const uploadOverlayToGas = async (base64Image: string, pin: string) => {
   } catch (error) { return { ok: false }; }
 };
 
+export const uploadBackgroundToGas = async (base64Image: string, pin: string) => {
+  const url = getGasUrl();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'uploadBackground', pin, image: base64Image })
+    });
+    return await response.json();
+  } catch (error) { return { ok: false }; }
+};
+
 export const setActiveEventOnGas = async (id: string, pin: string) => {
   const url = getGasUrl();
   const response = await fetch(url, {
