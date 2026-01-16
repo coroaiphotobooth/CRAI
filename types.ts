@@ -20,6 +20,7 @@ export interface PhotoboothSettings {
   eventDescription: string;
   folderId: string;
   overlayImage: string | null;
+  backgroundImage: string | null;
   autoResetTime: number; // seconds
   adminPin: string;
   orientation: 'portrait' | 'landscape';
