@@ -93,7 +93,7 @@ const CameraPage: React.FC<CameraPageProps> = ({ onCapture, onGenerate, onBack, 
     <div className="w-full min-h-screen flex flex-col items-center justify-start p-6 bg-black relative overflow-y-auto">
       <div className="flex justify-between items-center w-full mb-8 max-w-5xl z-20">
         <button onClick={onBack} className="text-white hover:text-purple-400 font-bold tracking-widest uppercase text-xs md:text-base transition-colors">BACK</button>
-        <h2 className="text-xs md:text-xl font-heading text-white neon-text">POSITION YOURSELF</h2>
+        <h2 className="text-xs md:text-xl font-heading text-white neon-text italic uppercase">Strike a Pose</h2>
         <div className="w-10" />
       </div>
 
@@ -108,34 +108,69 @@ const CameraPage: React.FC<CameraPageProps> = ({ onCapture, onGenerate, onBack, 
               className="w-full h-full object-cover"
               style={{ transform: 'scaleX(-1)' }}
             />
-            {/* Guide Frame */}
-            <div className="absolute inset-0 border-[20px] md:border-[40px] border-black/50 pointer-events-none">
-              <div className="w-full h-full border-2 border-dashed border-purple-500/30 flex items-center justify-center">
-                <div className="w-[60%] h-[60%] border border-purple-500/20 rounded-full opacity-30" />
+            
+            {/* HUD Overlay Elements */}
+            <div className="absolute inset-0 pointer-events-none border-[1px] border-white/5">
+              {/* Corner Brackets */}
+              <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-purple-500/50" />
+              <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-purple-500/50" />
+              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-purple-500/50" />
+              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-purple-500/50" />
+              
+              {/* Guide Reticle */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-48 h-48 border border-white/10 rounded-full flex items-center justify-center">
+                   <div className="w-1 h-8 bg-purple-500/20" />
+                   <div className="absolute h-1 w-8 bg-purple-500/20" />
+                </div>
               </div>
             </div>
+
             {countdown && (
-              <div className="absolute inset-0 flex items-center justify-center z-30">
-                <span className="text-[120px] md:text-[200px] font-heading text-white neon-text animate-ping">{countdown}</span>
+              <div className="absolute inset-0 flex items-center justify-center z-40 bg-black/40 backdrop-blur-[4px]">
+                <span className="text-[120px] md:text-[200px] font-heading text-white neon-text animate-ping italic">{countdown}</span>
               </div>
             )}
-            <div className="scan-line" />
+            
+            {/* Futuristic "CAPTURE" Shutter Button */}
+            {!countdown && (
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center z-30 px-6 group">
+                <button 
+                  onClick={startCountdown}
+                  className="relative w-28 h-28 md:w-32 md:h-32 flex items-center justify-center outline-none"
+                >
+                  {/* Outer Tech Ring (Rotating) */}
+                  <div className="absolute inset-0 border-2 border-dashed border-purple-500/30 rounded-full animate-[spin_10s_linear_infinite]" />
+                  
+                  {/* Middle Glow Layer */}
+                  <div className="absolute inset-2 border-2 border-white/20 rounded-full group-hover:border-purple-400/50 transition-colors duration-500" />
+                  
+                  {/* Action Core */}
+                  <div className="absolute inset-4 bg-white/5 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center group-hover:bg-purple-600/20 group-hover:border-purple-400 group-hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] md:text-xs font-heading font-black text-white tracking-[0.2em] italic group-hover:neon-text">CAPTURE</span>
+                      <div className="w-4 h-[1px] bg-purple-500 mt-1 opacity-50 group-hover:w-8 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Aesthetic Floating Brackets */}
+                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/40 group-hover:border-purple-400 transition-colors" />
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/40 group-hover:border-purple-400 transition-colors" />
+                </button>
+              </div>
+            )}
+
+            <div className="scan-line opacity-30" />
           </>
         ) : (
           <img src={capturedImage} alt="Capture" className="w-full h-full object-cover" />
         )}
       </div>
 
-      <div className={`flex flex-col sm:flex-row gap-4 md:gap-6 z-20 w-full ${maxWidthClass} pb-10`}>
-        {!capturedImage && (
-          <button 
-            disabled={countdown !== null}
-            onClick={startCountdown}
-            className="w-full py-5 bg-white text-black font-heading font-bold rounded-none hover:bg-purple-500 hover:text-white transition-all disabled:opacity-50 text-xl tracking-[0.2em]"
-          >
-            CAPTURE
-          </button>
-        )}
+      <div className="max-w-md text-center opacity-40">
+        <p className="text-[8px] md:text-[10px] text-gray-400 font-mono tracking-[0.3em] uppercase">
+          COROAI.APP
+        </p>
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
