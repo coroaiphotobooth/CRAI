@@ -1,0 +1,7 @@
+{
+  "name": "CORO AI GENERATE",
+  "description": "A dark futuristic AI-powered photobooth for events, transforming portraits into cinematic themes with Google Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
