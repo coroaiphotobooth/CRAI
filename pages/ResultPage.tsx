@@ -35,7 +35,7 @@ const ResultPage: React.FC<ResultPageProps> = ({ capturedImage, concept, setting
     const processFlow = async () => {
       try {
         // 1. Generate AI Image
-        setProgress("SYNTHESIZING_IDENTITY...");
+        setProgress("Processing...");
         const aiOutput = await generateAIImage(capturedImage, concept.prompt, aspectRatio);
         
         // 2. Tempel Overlay PNG
@@ -141,7 +141,7 @@ const ResultPage: React.FC<ResultPageProps> = ({ capturedImage, concept, setting
               <div className="bg-purple-500 h-full animate-[progress_10s_ease-in-out_infinite]" style={{width: '60%'}} />
             </div>
             <p className="text-gray-400 font-mono text-[10px] tracking-[0.2em] uppercase leading-relaxed">
-              Neural Network is synthesizing your digital persona. <br/>Please remain within the transmission area.
+              Coroai.app is synthesizing your digital persona. <br/>Please remain within the transmission area.
             </p>
           </div>
         </div>
@@ -184,7 +184,7 @@ const ResultPage: React.FC<ResultPageProps> = ({ capturedImage, concept, setting
                 onClick={() => setShowQR(true)} 
                 className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-full font-heading text-xs tracking-[0.4em] uppercase italic transition-all shadow-[0_10px_30px_rgba(188,19,254,0.4)] animate-bounce active:scale-95"
               >
-                GET_PHOTO_LINK
+                DOWNLOAD
               </button>
             </div>
           )}
