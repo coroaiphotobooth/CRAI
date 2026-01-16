@@ -1,154 +1,127 @@
 
-/**
- * BACKEND UNTUK CORO AI PHOTOBOOTH - LITE VERSION
- */
+import { GalleryItem, PhotoboothSettings, Concept, EventRecord } from '../types';
+import { DEFAULT_GAS_URL } from '../constants';
 
-const SCRIPT_PROP = PropertiesService.getScriptProperties();
+const getGasUrl = () => {
+  return localStorage.getItem('APPS_SCRIPT_BASE_URL') || DEFAULT_GAS_URL;
+};
 
-function getSpreadsheet() {
-  let ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    const ssId = SCRIPT_PROP.getProperty('SPREADSHEET_ID');
-    if (ssId) {
-      ss = SpreadsheetApp.openById(ssId);
-    }
-  }
-  return ss;
-}
+export const fetchSettings = async () => {
+  const url = getGasUrl();
+  const response = await fetch(`${url}?action=getSettings`);
+  return await response.json();
+};
 
-function setup() {
-  let ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    ss = SpreadsheetApp.create('Coro AI Photobooth Database');
-    SCRIPT_PROP.setProperty('SPREADSHEET_ID', ss.getId());
-  }
-
-  // Setup Gallery Sheet
-  let gallerySheet = ss.getSheetByName('Gallery');
-  if (!gallerySheet) {
-    gallerySheet = ss.insertSheet('Gallery');
-    gallerySheet.appendRow(['id', 'createdAt', 'conceptName', 'imageUrl', 'downloadUrl', 'token', 'eventId']);
-    gallerySheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#f3f3f3");
-  }
-  
-  if (!SCRIPT_PROP.getProperty('ADMIN_PIN')) {
-    SCRIPT_PROP.setProperty('ADMIN_PIN', '1234');
-  }
-  
-  return "Setup Berhasil. SS URL: " + ss.getUrl();
-}
-
-function doGet(e) {
-  const action = e.parameter.action;
-  const ss = getSpreadsheet();
-  if (!ss) return createJsonResponse({ ok: false, error: 'Spreadsheet not found.' });
-
-  if (action === 'getSettings') {
-    return createJsonResponse({
-      ok: true,
-      settings: {
-        eventName: SCRIPT_PROP.getProperty('EVENT_NAME') || 'CORO AI PHOTOBOOTH',
-        eventDescription: SCRIPT_PROP.getProperty('EVENT_DESC') || 'Transform Your Reality',
-        folderId: SCRIPT_PROP.getProperty('FOLDER_ID') || '',
-        overlayImage: SCRIPT_PROP.getProperty('OVERLAY_IMAGE') || null,
-        adminPin: SCRIPT_PROP.getProperty('ADMIN_PIN') || '1234',
-        autoResetTime: parseInt(SCRIPT_PROP.getProperty('AUTO_RESET')) || 60,
-        orientation: SCRIPT_PROP.getProperty('ORIENTATION') || 'portrait'
-      }
-    });
-  }
-
-  if (action === 'gallery') {
-    const sheet = ss.getSheetByName('Gallery');
-    const values = sheet.getDataRange().getValues();
-    if (values.length <= 1) return createJsonResponse({ items: [] });
-    
-    const headers = values[0];
-    const items = values.slice(1)
-      .filter(row => row[0] && row[0].toString().trim() !== "") 
-      .map(row => {
-        let obj = {};
-        headers.forEach((h, i) => { obj[h] = row[i]; });
-        return obj;
-      });
-      
-    return createJsonResponse({ items: items.reverse() });
-  }
-  
-  return createJsonResponse({ ok: true, message: "API Active" });
-}
-
-function doPost(e) {
-  let data;
+export const uploadToDrive = async (base64Image: string, metadata: any) => {
+  const url = getGasUrl();
   try {
-    data = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return createJsonResponse({ ok: false, error: 'Invalid JSON' });
-  }
-  
-  const action = data.action;
-  const ss = getSpreadsheet();
-  const gallerySheet = ss.getSheetByName('Gallery');
-
-  if (action === 'uploadGenerated') {
-    const folderId = data.folderId || SCRIPT_PROP.getProperty('FOLDER_ID');
-    let folder;
-    try {
-      folder = DriveApp.getFolderById(folderId);
-    } catch (e) {
-      folder = DriveApp.getRootFolder();
-    }
-    
-    const timestamp = new Date().toISOString();
-    const blob = Utilities.newBlob(Utilities.base64Decode(data.image.split(',')[1]), 'image/png', `PHOTO_${new Date().getTime()}.png`);
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    
-    const token = Utilities.getUuid();
-    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${file.getId()}&sz=w1000`;
-    const viewUrl = `https://drive.google.com/file/d/${file.getId()}/view`;
-    
-    gallerySheet.appendRow([file.getId(), timestamp, data.conceptName, thumbnailUrl, viewUrl, token, data.eventId || ""]);
-    
-    return createJsonResponse({
-      ok: true,
-      id: file.getId(),
-      imageUrl: thumbnailUrl,
-      viewUrl: viewUrl,
-      downloadUrl: thumbnailUrl
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'uploadGenerated',
+        image: base64Image,
+        ...metadata
+      })
     });
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: "FETCH_FAILED" };
   }
+};
 
-  const adminPin = SCRIPT_PROP.getProperty('ADMIN_PIN') || "1234";
-  if (data.pin !== adminPin) return createJsonResponse({ ok: false, error: 'PIN INVALID' });
+export const fetchGallery = async (eventId?: string): Promise<GalleryItem[]> => {
+  const url = getGasUrl();
+  const query = eventId ? `&eventId=${eventId}` : '';
+  const response = await fetch(`${url}?action=gallery${query}`);
+  const data = await response.json();
+  return data.items || [];
+};
 
-  if (action === 'updateSettings') {
-    const s = data.settings;
-    SCRIPT_PROP.setProperty('EVENT_NAME', s.eventName);
-    SCRIPT_PROP.setProperty('EVENT_DESC', s.eventDescription);
-    SCRIPT_PROP.setProperty('FOLDER_ID', s.folderId);
-    SCRIPT_PROP.setProperty('OVERLAY_IMAGE', s.overlayImage || '');
-    SCRIPT_PROP.setProperty('AUTO_RESET', s.autoResetTime.toString());
-    SCRIPT_PROP.setProperty('ORIENTATION', s.orientation);
-    SCRIPT_PROP.setProperty('ADMIN_PIN', s.adminPin);
-    return createJsonResponse({ ok: true });
-  }
+export const fetchEvents = async (): Promise<EventRecord[]> => {
+  const url = getGasUrl();
+  const response = await fetch(`${url}?action=getEvents`);
+  const data = await response.json();
+  return data.items || [];
+};
 
-  if (action === 'uploadOverlay') {
-    const blob = Utilities.newBlob(Utilities.base64Decode(data.image.split(',')[1]), 'image/png', 'overlay.png');
-    const folderId = SCRIPT_PROP.getProperty('FOLDER_ID');
-    let folder;
-    try { folder = DriveApp.getFolderById(folderId); } catch(e) { folder = DriveApp.getRootFolder(); }
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const url = `https://lh3.googleusercontent.com/d/${file.getId()}`;
-    SCRIPT_PROP.setProperty('OVERLAY_IMAGE', url);
-    return createJsonResponse({ ok: true, url: url });
-  }
+export const saveSettingsToGas = async (settings: PhotoboothSettings, pin: string) => {
+  const url = getGasUrl();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateSettings', pin, settings })
+    });
+    const data = await response.json();
+    return data.ok;
+  } catch (error) { return false; }
+};
 
-  return createJsonResponse({ ok: false, error: 'Action unknown' });
-}
+export const uploadOverlayToGas = async (base64Image: string, pin: string) => {
+  const url = getGasUrl();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'uploadOverlay', pin, image: base64Image })
+    });
+    return await response.json();
+  } catch (error) { return { ok: false }; }
+};
 
-function createJsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
+export const uploadBackgroundToGas = async (base64Image: string, pin: string) => {
+  const url = getGasUrl();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'uploadBackground', pin, image: base64Image })
+    });
+    return await response.json();
+  } catch (error) { return { ok: false }; }
+};
+
+export const setActiveEventOnGas = async (id: string, pin: string) => {
+  const url = getGasUrl();
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'setActiveEvent', id, pin })
+  });
+  return await response.json();
+};
+
+export const deletePhotoFromGas = async (id: string, pin: string) => {
+  const url = getGasUrl();
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'deletePhoto', pin, id })
+  });
+  return await response.json();
+};
+
+export const deleteEventOnGas = async (id: string, pin: string) => {
+  const url = getGasUrl();
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'deleteEvent', id, pin })
+  });
+  return await response.json();
+};
+
+export const createEventOnGas = async (name: string, description: string, folderId: string, pin: string) => {
+  const url = getGasUrl();
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'createEvent', name, description, folderId, pin })
+  });
+  return await response.json();
+};
+
+export const saveConceptsToGas = async (concepts: Concept[], pin: string) => {
+  const url = getGasUrl();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateConcepts', pin, concepts })
+    });
+    const data = await response.json();
+    return data.ok;
+  } catch (error) { return false; }
+};
