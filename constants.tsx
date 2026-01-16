@@ -1,7 +1,7 @@
 
 import { Concept, PhotoboothSettings } from './types';
 
-export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycby7i9eiAO2geC988T0xT2DOFL31ea69fF-j6lpxUEMdihM5R2TGxFNHlhc0Lvy9X8szlA/exec';
+export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycby3SIzV13FGsbxMPYHv2JHPr9b_JFvF19xDpbiTfyKw9Y9TBzpYMR0fkPMRTWc3m7x4/exec';
 
 export const DEFAULT_CONCEPTS: Concept[] = [
   {
@@ -43,10 +43,11 @@ export const DEFAULT_CONCEPTS: Concept[] = [
 ];
 
 export const DEFAULT_SETTINGS: PhotoboothSettings = {
-  eventName: 'CORO AI PHOTOBOOTH',
+  eventName: 'COROAI PHOTOBOOTH',
   eventDescription: 'Transform Your Reality into Digital Art',
   folderId: '1knqeFCrMVhUlfzmuu-AVTkZmFF3Dnuqy',
   overlayImage: null,
+  backgroundImage: null,
   autoResetTime: 60,
   adminPin: '1234',
   orientation: 'portrait'
